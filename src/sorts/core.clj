@@ -1,6 +1,8 @@
 (ns sorts.core
   (:use clojure.math.numeric-tower))
 
+(def ^:dynamic *pthresh* 500)
+
 (defn- swap-indices
   [seq i1 i2]
   (let [vec (vec seq)]
@@ -35,10 +37,15 @@
 
 (defn- split-seq
   [seq]
-  (split-at (floor (/ (count seq) 2)) seq))
+  (-> seq count (/ 2) floor (split-at seq)))
 
-(defn merge-sort
+(defn- do-merge-sort
   [seq]
   (if (= (count seq) 1)
     seq
-    (apply merge-seqs (map merge-sort (split-seq seq)))))
+    (apply merge-seqs ((if (> (count seq) *pthresh*) pmap map) do-merge-sort (split-seq seq)))))
+
+(defn merge-sort
+  [seq & {:keys [pthresh]}]
+  (binding [*pthresh* (or pthresh *pthresh*)]
+    (do-merge-sort seq)))
